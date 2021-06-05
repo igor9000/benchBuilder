@@ -8,15 +8,15 @@
     <h1><%= title %></h1>
     <p>Welcome to <%= title %>!!!!!!!</p>
     <% 
-      if (!isGroupDefined) {
+      if (!groupInfo) {
     %>
     <p>No Open Sports group is defined, <a href="/config">configure one now</a>.</p>
     <% } else { %>
 
-    <p>There is a group</p>
+    <p><%= groupInfo.name %> [ <a href="/config">configure</a> ]</p>
     <% } %>
 
-    <p>osGroup-: <%- osGroup %></p>
-    <p>osGroup=: <%= osGroup %></p>
+    <p>groupInfo-: <%- groupInfo %></p>
+    <p>groupInfo=: <%= groupInfo %></p>
   </body>
 </html>

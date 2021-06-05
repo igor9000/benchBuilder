@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p><label for="openSportsGroupId">Enter your open sports group ID</label></p>
-    <p><input type="text" name="openSportsGroupId" /></p>
-    <p><input type="submit" value="Save" /></p>
-  </body>
+	<head>
+		<title><%= title %></title>
+		<link rel='stylesheet' href='/stylesheets/style.css' />
+	</head>
+	<body>
+		<h1><%= title %></h1>
+		<a href="/">Home</a>
+		<%
+			if (err) {
+		%>
+			<p class="danger"><%= err %></p>
+		<% } %>
+		<p>Group Name</p>
+		<p><%= groupInfo.name || 'undefined' %></p>
+		<form method="POST" action="/config">
+		<p><label for="openSportsGroupId">Enter your open sports group ID</label></p>
+		<p><input type="text" name="openSportsGroupId" value="<%= groupInfo.openSportsGroupId %>" /></p>
+		<p><input type="submit" value="Save" /></p>
+	</form>
+	</body>
 </html>
