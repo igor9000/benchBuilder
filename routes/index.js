@@ -43,9 +43,15 @@ router.get('/game', function(req, res, next) {
 		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, attendeeTypes.player);
 		const playerIds = getAttendeeIDList(playerList);
 
+
+		const matches = db.get().collection('players').find({ 'openSportsUserId': { $in:playerIds } });
 		
-		
-		console.log(playerIds)
+		if (matches) {
+			console.log('potential matches')
+			matches.forEach(console.log);
+		}
+
+
 		res.render('game', {
 			title: `${dateString} - ${gameInfo.result.title}`,
 			gameInfo: gameInfo.result,

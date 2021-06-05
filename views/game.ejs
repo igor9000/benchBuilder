@@ -9,20 +9,25 @@
 		<div><a href="/">Home</a></div>
 
 
-		<table border="1">
+		<table border="1" cellpadding="3">
 			<thead>
 				<tr>
 					<th>ID</th>
 					<th>First Name</th>
 					<th>Last Name</th>
+					<th>Rating</th>
 				</tr>
 			</thead>
 			<tbody>
-				<% playerList.forEach(attendee => { %>
-					<tr>
-						<td><%= attendee.attendeeSummary[0].userSummary.userID %></td>
+				<% playerList.forEach(attendee => {
+					const isKnownPlayer = attendee.attendeeSummary[0].userSummary.playerRating;
+
+				%>
+					<tr class="<%= isKnownPlayer ? 'player-known' : 'player-new' %>">
+						<td><a href="/player?id=<%= attendee.attendeeSummary[0].userSummary.userID %>"><%= attendee.attendeeSummary[0].userSummary.userID %></a></td>
 						<td><%= attendee.attendeeSummary[0].userSummary.firstName %></td>
 						<td><%= attendee.attendeeSummary[0].userSummary.lastName %></td>
+						<td><%= attendee.attendeeSummary[0].userSummary.rating || 'Not Rated' %></td>
 					</tr>
 				<% }) %>
 			</tbody>
