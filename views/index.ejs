@@ -1,22 +1,37 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %>!!!!!!!</p>
-    <% 
-      if (!groupInfo) {
-    %>
-    <p>No Open Sports group is defined, <a href="/config">configure one now</a>.</p>
-    <% } else { %>
+	<head>
+		<title><%= title %></title>
+		<link rel='stylesheet' href='/stylesheets/style.css' />
+	</head>
+	<body>
+		<h1><%= title %></h1>
+		<p>Welcome to <%= title %>!!!!!!!</p>
+		<% 
+			if (!groupInfo) {
+		%>
+		<p>No Open Sports group is defined, <a href="/config">configure one now</a>.</p>
+		<% } else { %>
 
-    <p><%= groupInfo.name %> [ <a href="/config">configure</a> ]</p>
-    <% } %>
+		<p><%= groupInfo.name %> [ <a href="/config">configure</a> ]</p>
+		<% } %>
 
-    <p>groupInfo-: <%- groupInfo %></p>
-    <p>groupInfo=: <%= groupInfo %></p>
-  </body>
+		<% if (gameList) { %>
+			<p>List of Games</p>
+			<%
+				gameList.forEach(game => {
+					const d = new Date(game.start)
+
+					const dateString = `${d.getMonth()}/${d.getDate()}/${d.getFullYear()}`
+			%>
+				<div><a href="/game?aliasID=<%= game.aliasID %>"><%= dateString %> <%= game.title %></a></div>
+			<%
+				})
+		}
+		%>
+
+		<pre style="display: none;">
+			<%= JSON.stringify(gameList) %>
+		</pre>
+	</body>
 </html>

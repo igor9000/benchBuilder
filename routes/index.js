@@ -9,10 +9,22 @@ var db = require('../db');
 /* GET home page. */
 router.get('/', function(req, res, next) {
 	db.get().collection('openSportsGroups').findOne({}, function (findErr, result) {
-		res.render('index', {
-			title: req.app.settings.name,
-			groupInfo: result
-		});
+
+		if (result) {
+			fetchGames(result.openSportsGroupId).then(gameList => {
+				res.render('index', {
+					title: req.app.settings.name,
+					groupInfo: result,
+					gameList: gameList.result
+				});
+				next();
+			});
+		} else {
+			res.render('index', {
+				title: req.app.settings.name,
+				groupInfo: result
+			});
+		}
 	});
 
 
