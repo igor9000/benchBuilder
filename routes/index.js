@@ -50,12 +50,15 @@ router.get('/game', function(req, res, next) {
 				makePlayerKnown(playerList, player);
 			});
 
+			const hasUnknownPlayers = !!getUnknownPlayers(playerList).length;
+
 
 			res.render('game', {
 				title: `${dateString} - ${gameInfo.result.title}`,
 				gameInfo: gameInfo.result,
 				playerList,
-				knownPlayerList
+				knownPlayerList,
+				hasUnknownPlayers
 			});
 		});
 	});
@@ -155,6 +158,13 @@ const makePlayerKnown = function(playerList, knownPlayer) {
 	if (matchedPlayer) {
 		matchedPlayer.attendeeSummary[0].userSummary.ratingOverall = knownPlayer.ratingOverall;
 	}
+};
+
+const getUnknownPlayers = function(playerList) {
+	const matchedPlayers = playerList.filter(player => {
+		return !player.attendeeSummary[0].userSummary.ratingOverall;
+	});
+	return matchedPlayers;
 };
 
 module.exports = router;

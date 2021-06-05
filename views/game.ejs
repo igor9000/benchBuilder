@@ -57,6 +57,17 @@
 			</tbody>
 		</table>
 
+<h3>Build Rosters</h3>
+<%
+if (hasUnknownPlayers) {
+%>
+<div class="danger">Cannot build rosters until all players are rated</div>
+<%	
+} else {
+%>
+<div class="success">Roster Built <%= new Date() %></div>
+<% } %>
+
 
 
 		
