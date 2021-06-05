@@ -44,18 +44,19 @@ router.get('/game', function(req, res, next) {
 		const playerIds = getAttendeeIDList(playerList);
 
 
-		const matches = db.get().collection('players').find({ 'openSportsUserId': { $in:playerIds } });
-		
-		if (matches) {
-			console.log('potential matches')
-			matches.forEach(console.log);
-		}
+		db.get().collection('players').find({ 'openSportsUserId': { $in:playerIds } }).toArray().then(knownPlayerList => {
+
+			knownPlayerList.forEach(player => {
+				makePlayerKnown(playerList, player);
+			});
 
 
-		res.render('game', {
-			title: `${dateString} - ${gameInfo.result.title}`,
-			gameInfo: gameInfo.result,
-			playerList
+			res.render('game', {
+				title: `${dateString} - ${gameInfo.result.title}`,
+				gameInfo: gameInfo.result,
+				playerList,
+				knownPlayerList
+			});
 		});
 	});
 	
@@ -139,12 +140,21 @@ const getAttendeeListByAttendeeType = function(attendeeList, attendeeType) {
 	return attendeeList.filter(attendee => {
 		return parseInt(attendee.attendeeSummary[0].ticketClassID) === attendeeType;
 	});
-}
+};
 
 const getAttendeeIDList = function(attendeeList) {
 	return attendeeList.map(attendee => {
 		return attendee.attendeeSummary[0].userSummary.userID;
 	});
-}
+};
+
+const makePlayerKnown = function(playerList, knownPlayer) {
+	const matchedPlayer = playerList.find(player => {
+		return parseInt(player.attendeeSummary[0].userSummary.userID) === parseInt(knownPlayer.openSportsUserId);
+	});
+	if (matchedPlayer) {
+		matchedPlayer.attendeeSummary[0].userSummary.ratingOverall = knownPlayer.ratingOverall;
+	}
+};
 
 module.exports = router;
