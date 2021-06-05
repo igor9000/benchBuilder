@@ -5,6 +5,10 @@ const MongoClient = require('mongodb').MongoClient;
 
 var db = require('../db');
 
+const attendeeTypes = {
+	goalie: 95868,
+	player: 95869
+}
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -31,11 +35,24 @@ router.get('/', function(req, res, next) {
 });
 
 
-/* GET games list */
-router.get('/games', function(req, res, next) {
-  fetchGames().then(gameList => {
-	res.render('games', { title: 'Hello, games!', tacos: 'tacos', games: gameList });
-  });
+/* GET game */
+router.get('/game', function(req, res, next) {
+	fetchGame(req.query.aliasID).then(gameInfo => {
+		const d = new Date(gameInfo.result.start);
+		const dateString = `${d.getMonth()}/${d.getDate()}/${d.getFullYear()}`;
+		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, attendeeTypes.player);
+		const playerIds = getAttendeeIDList(playerList);
+
+		
+		
+		console.log(playerIds)
+		res.render('game', {
+			title: `${dateString} - ${gameInfo.result.title}`,
+			gameInfo: gameInfo.result,
+			playerList
+		});
+	});
+	
 });
 
 
@@ -106,6 +123,22 @@ const fetchGames = function(groupId) {
 	.then(data => data);
 };
 
+const fetchGame = function(gameId) {
+  return fetch(`https://opensports.net/api/posts/loadOne?aliasID=${gameId}`)
+	.then(response => response.json())
+	.then(data => data);
+};
 
+const getAttendeeListByAttendeeType = function(attendeeList, attendeeType) {
+	return attendeeList.filter(attendee => {
+		return parseInt(attendee.attendeeSummary[0].ticketClassID) === attendeeType;
+	});
+}
+
+const getAttendeeIDList = function(attendeeList) {
+	return attendeeList.map(attendee => {
+		return attendee.attendeeSummary[0].userSummary.userID;
+	});
+}
 
 module.exports = router;
