@@ -7,5 +7,16 @@
   <body>
     <h1><%= title %></h1>
     <p>Welcome to <%= title %>!!!!!!!</p>
+    <% 
+      if (!isGroupDefined) {
+    %>
+    <p>No Open Sports group is defined, <a href="/config">configure one now</a>.</p>
+    <% } else { %>
+
+    <p>There is a group</p>
+    <% } %>
+
+    <p>osGroup-: <%- osGroup %></p>
+    <p>osGroup=: <%= osGroup %></p>
   </body>
 </html>
