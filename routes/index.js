@@ -87,18 +87,25 @@ router.get('/', function(req, res, next) {
 router.get('/game', function(req, res, next) {
 	fetchGame(req.query.aliasID).then(gameInfo => {
 		const d = new Date(gameInfo.result.start);
-		const dateString = `${d.getMonth()}/${d.getDate()}/${d.getFullYear()}`;
+		const dateString = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
 		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, attendeeTypes.player);
 		const playerIds = getAttendeeIDList(playerList);
 
 
-		db.get().collection('players').find({ 'openSportsUserId': { $in:playerIds } }).toArray().then(knownPlayerList => {
+		db.get().collection('players').find({ 'openSportsUserId': { $in:playerIds } }).sort({ ratingOverall: -1 }).toArray().then(knownPlayerList => {
 
 			knownPlayerList.forEach(player => {
 				makePlayerKnown(playerList, player);
 			});
 
-			const hasUnknownPlayers = !!getUnknownPlayers(playerList).length;
+			const unknownPlayers = getUnknownPlayers(playerList);
+			const hasUnknownPlayers = !!unknownPlayers.length;
+
+			addUnknownPlayersToDb(unknownPlayers);
+
+			playerList.sort((a, b) => {
+				return parseInt(b.attendeeSummary[0].userSummary.ratingOverall) - parseInt(a.attendeeSummary[0].userSummary.ratingOverall);
+			});
 
 
 			res.render('game', {
@@ -106,7 +113,8 @@ router.get('/game', function(req, res, next) {
 				gameInfo: gameInfo.result,
 				playerList,
 				knownPlayerList,
-				hasUnknownPlayers
+				hasUnknownPlayers,
+				rosters: !hasUnknownPlayers ? buildRoster(playerList) : undefined
 			});
 		});
 	});
@@ -156,7 +164,6 @@ router.post('/config', function(req, res, next) {
 
 			res.redirect('config');
 		} else {
-			console.log('response', response)
 			res.redirect('config?err=10');
 		}
 	});
@@ -177,20 +184,36 @@ router.post('/deletegroup', function(req, res, next) {
 
 router.get('/player', function(req, res, next) {
 	db.get().collection('players').findOne({ openSportsUserId: parseInt(req.query.id) }, function (findErr, result) {
-		console.log(req.query.id, result)
 		res.render('player', {
 			title: `${result.firstName} ${result.lastName}`,
 			playerInfo: result ? result : {},
-			playerRatingCategories
+			playerRatingCategories,
+			success: req.query.hasOwnProperty('success')
 		});
 		next();
 	});
 });
 router.post('/player', function(req, res, next) {
-	console.log('its a response!', req.body)
+	const updateData = {};
+	const blackList = ['openSportsUserId'];
+	let ratingOverall = 0;
+	let ratingMax = 0;
 	Object.keys(req.body).forEach(key => {
-		console.log(req.body[key])
-	})
+		if (blackList.indexOf(key) === -1) {
+			updateData[key] = parseInt(req.body[key]);
+			ratingOverall += parseInt(req.body[key]);
+			ratingMax += 100;
+		}
+	});
+	updateData.ratingOverall = Math.round(((ratingOverall / ratingMax) * 100));
+	updateData.lastUpdateTime = new Date().valueOf();
+
+
+	const query = { openSportsUserId: parseInt(req.body.openSportsUserId) };
+	const update = { $set: updateData };
+	const options = { upsert: true };
+	db.get().collection('players').updateOne(query, update, options);
+	res.redirect(`/player?id=${req.body.openSportsUserId}&success`);
 });
 
 
@@ -233,5 +256,57 @@ const getUnknownPlayers = function(playerList) {
 	});
 	return matchedPlayers;
 };
+
+const addUnknownPlayersToDb = function(playerList) {
+	playerList.forEach(player => {
+		const query = { openSportsUserId: parseInt(player.attendeeSummary[0].userSummary.userID) };
+		const playerData = {
+			openSportsUserId: parseInt(player.attendeeSummary[0].userSummary.userID),
+			firstName: player.attendeeSummary[0].userSummary.firstName,
+			lastName: player.attendeeSummary[0].userSummary.lastName
+		};
+		const update = { $set: playerData };
+		const options = { upsert: true };
+		db.get().collection('players').updateOne(query, update, options);
+	});
+};
+
+const deleteEmptyPlayers = function() {
+	db.get().collection('players').deleteMany({ firstName: null, lastName: null });
+};
+
+const deleteUnratedPlayers = function() {
+	db.get().collection('players').deleteMany({ ratingOverall: undefined });
+};
+
+const buildRoster = function(playerList) {
+	const teams = {
+		lightTeam: {
+			players: []
+		},
+		darkTeam: {
+			players: []
+		}
+	};
+
+	
+	playerList.forEach(player => {
+		let onClockTeam;
+		if (teams.lightTeam.players.length === teams.darkTeam.players.length) {
+			onClockTeam = coinFlip() === 0 ? 'lightTeam' : 'darkTeam';
+		} else {
+			onClockTeam = teams.lightTeam.players.length < teams.darkTeam.players.length ? 'lightTeam' : 'darkTeam'
+		}
+		teams[onClockTeam].players.push(player);
+	});
+
+	return teams;
+
+};
+
+const coinFlip = function() {
+	return Math.floor(Math.random() * (2 - 0) + 0);
+}
+
 
 module.exports = router;

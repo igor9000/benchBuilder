@@ -7,19 +7,24 @@
 	<body>
 		<h1><%= title %></h1>
 		<a href="/">Home</a>
+		<% if (success) { %>
+		<div class="success">Player updated <%= new Date() %></div>
+		<% } %> 
 		<form action="/player" method="post">
-			<div><label for="openSportsUserId">Open Sports User ID</label></div>
-			<div><input name="openSportsUserId" type="input" value="<%= playerInfo.openSportsUserId %>" disabled /></div>
+			<div>Open Sports User ID: <%= playerInfo.openSportsUserId %></div>
+			<input name="openSportsUserId" type="hidden" value="<%= playerInfo.openSportsUserId %>" />
 
 			<%
 				playerRatingCategories.forEach((ratingCategory, index) => {
 			%>
 				<div><label for="<%= ratingCategory.name %>"><%= ratingCategory.uiLabel %></label></div>
-				<div><input type="range" id="<%= ratingCategory.name %>" name="<%= ratingCategory.name %>" min="0" max="100" step="10" value="<%= playerInfo[ratingCategory] %>"></div>
+				<div><input type="range" id="<%= ratingCategory.name %>" name="<%= ratingCategory.name %>" min="0" max="100" step="10" value="<%= playerInfo[ratingCategory.name] %>" /></div>
 			<%
 				})
 			%>
-			<input type="submit" value="Save" />
+			<div>Overall: <%= playerInfo.ratingOverall %></div>
+
+			<div><input type="submit" value="Save" /></div>
 		</form>
 
 		<pre style="display: none;"><%= JSON.stringify(playerInfo) %></pre>

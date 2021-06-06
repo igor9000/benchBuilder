@@ -22,7 +22,7 @@
 				gameList.forEach(game => {
 					const d = new Date(game.start)
 
-					const dateString = `${d.getMonth()}/${d.getDate()}/${d.getFullYear()}`
+					const dateString = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`
 			%>
 				<div><a href="/game?aliasID=<%= game.aliasID %>"><%= dateString %> <%= game.title %></a></div>
 			<%

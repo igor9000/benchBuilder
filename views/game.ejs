@@ -59,20 +59,40 @@
 
 <h3>Build Rosters</h3>
 <%
-if (hasUnknownPlayers) {
+if (rosters === undefined) {
 %>
 <div class="danger">Cannot build rosters until all players are rated</div>
 <%	
 } else {
 %>
 <div class="success">Roster Built <%= new Date() %></div>
+<div><b>Light Team</b></div>
+<div>
+	<%
+		rosters.lightTeam.players.forEach(player => {
+	%>
+		<div><%= player.attendeeSummary[0].userSummary.firstName %> <%= player.attendeeSummary[0].userSummary.lastName[0] %>.</div>
+<%
+	})
+%>
+</div>
+<div><b>Dark Team</b></div>
+<div>
+	<%
+		rosters.darkTeam.players.forEach(player => {
+	%>
+		<div><%= player.attendeeSummary[0].userSummary.firstName %> <%= player.attendeeSummary[0].userSummary.lastName[0] %>.</div>
+<%
+	})
+%>
+</div>
 <% } %>
 
 
 
 		
 
-		<pre><%= JSON.stringify(gameInfo) %></pre>
-		<pre><%= JSON.stringify(playerList) %></pre>
+		<pre style="display: none;"><%= JSON.stringify(gameInfo) %></pre>
+		<pre style="display: none;"><%= JSON.stringify(playerList) %></pre>
 	</body>
 </html>
