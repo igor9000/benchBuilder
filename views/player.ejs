@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title><%= title %></title>
+		<link rel='stylesheet' href='/stylesheets/style.css' />
+	</head>
+	<body>
+		<h1><%= title %></h1>
+		<a href="/">Home</a>
+		<form action="/player" method="post">
+			<div><label for="openSportsUserId">Open Sports User ID</label></div>
+			<div><input name="openSportsUserId" type="input" value="<%= playerInfo.openSportsUserId %>" disabled /></div>
+
+			<%
+				playerRatingCategories.forEach((ratingCategory, index) => {
+			%>
+				<div><label for="<%= ratingCategory.name %>"><%= ratingCategory.uiLabel %></label></div>
+				<div><input type="range" id="<%= ratingCategory.name %>" name="<%= ratingCategory.name %>" min="0" max="100" step="10" value="<%= playerInfo[ratingCategory] %>"></div>
+			<%
+				})
+			%>
+			<input type="submit" value="Save" />
+		</form>
+
+		<pre style="display: none;"><%= JSON.stringify(playerInfo) %></pre>
+	</body>
+</html>

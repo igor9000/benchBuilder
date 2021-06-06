@@ -8,7 +8,55 @@ var db = require('../db');
 const attendeeTypes = {
 	goalie: 95868,
 	player: 95869
-}
+};
+
+const playerRatingCategories = [
+	{
+		name: 'ratingSpeed',
+		uiLabel: 'Speed',
+		description: ''
+	}, {
+		name: 'ratingStopping',
+		uiLabel: 'Stopping',
+		description: ''
+	}, {
+		name: 'ratingTightTurn',
+		uiLabel: 'Tight Turn',
+		description: ''
+	}, {
+		name: 'ratingShotPower',
+		uiLabel: 'Shot Power',
+		description: ''
+	}, {
+		name: 'ratingShotAccuracy',
+		uiLabel: 'Shot Accuracy',
+		description: ''
+	}, {
+		name: 'ratingBalance',
+		uiLabel: 'Balance',
+		description: ''
+	}, {
+		name: 'ratingSkatingBackwards',
+		uiLabel: 'Skating Backwards',
+		description: ''
+	}, {
+		name: 'ratingForwardCrossover',
+		uiLabel: 'Forward Crossover',
+		description: ''
+	}, {
+		name: 'ratingBackwardCrossOver',
+		uiLabel: 'Backward Crossover',
+		description: ''
+	}, {
+		name: 'ratingPositioning',
+		uiLabel: 'Positioning',
+		description: ''
+	}, {
+		name: 'ratingHockeySense',
+		uiLabel: 'Hockey Sense',
+		description: ''
+	}
+];
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -124,6 +172,25 @@ router.post('/deletegroup', function(req, res, next) {
 		collection.deleteMany({});
 		res.redirect('config');
 	});
+});
+
+
+router.get('/player', function(req, res, next) {
+	db.get().collection('players').findOne({ openSportsUserId: parseInt(req.query.id) }, function (findErr, result) {
+		console.log(req.query.id, result)
+		res.render('player', {
+			title: `${result.firstName} ${result.lastName}`,
+			playerInfo: result ? result : {},
+			playerRatingCategories
+		});
+		next();
+	});
+});
+router.post('/player', function(req, res, next) {
+	console.log('its a response!', req.body)
+	Object.keys(req.body).forEach(key => {
+		console.log(req.body[key])
+	})
 });
 
 
