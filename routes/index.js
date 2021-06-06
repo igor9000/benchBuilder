@@ -5,10 +5,6 @@ const MongoClient = require('mongodb').MongoClient;
 
 var db = require('../db');
 
-const attendeeTypes = {
-	goalie: 95868,
-	player: 95869
-};
 
 const playerRatingCategories = [
 	{
@@ -88,7 +84,8 @@ router.get('/game', function(req, res, next) {
 	fetchGame(req.query.aliasID).then(gameInfo => {
 		const d = new Date(gameInfo.result.start);
 		const dateString = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
-		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, attendeeTypes.player);
+		const playerTicketId = gameInfo.result.ticketsSummary.find(item => item.title === "Player").id;
+		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, playerTicketId);
 		const playerIds = getAttendeeIDList(playerList);
 
 
@@ -104,7 +101,12 @@ router.get('/game', function(req, res, next) {
 			addUnknownPlayersToDb(unknownPlayers);
 
 			playerList.sort((a, b) => {
-				return parseInt(b.attendeeSummary[0].userSummary.ratingOverall) - parseInt(a.attendeeSummary[0].userSummary.ratingOverall);
+				if (b.attendeeSummary[0].userSummary.ratingOverall && a.attendeeSummary[0].userSummary.ratingOverall) {
+					return parseInt(b.attendeeSummary[0].userSummary.ratingOverall) - parseInt(a.attendeeSummary[0].userSummary.ratingOverall);
+				} else if (b.attendeeSummary[0].userSummary.ratingOverall) {
+					return 1;
+				}
+				return -1;
 			});
 
 
