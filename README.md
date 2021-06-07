@@ -8,6 +8,7 @@ Connect it to your Open Sports group (using your Open Sports group ID).  Rate yo
 * versioning
 * saving generated rosters
 * refreshing player evaluations (expire them after some user defined interval (90 days?) so that skaters can be re-evaluated as they progress)
+* exporting saved player evaluations
 
 ## Contact
 benchbuilder@adamkonieska.com
