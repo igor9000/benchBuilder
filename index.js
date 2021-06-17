@@ -10,6 +10,8 @@ const indexRouter = require('./routes/index');
 const gamesRouter = require('./routes/games');
 const db = require('./db');
 
+const benchBuilderPackage = require('./package.json');
+
 const MongoClient = require('mongodb').MongoClient;
 
 const app = express();
@@ -29,23 +31,49 @@ app.use('/', indexRouter);
 app.use('/games', gamesRouter);
 
 
-
 indexRouter.get('*', function(req, res, next) {
 	req.app = app;
 	next();
 });
 
 
+
+
 db.connect('mongodb://localhost', 'benchBuilder', function(err) {
 	if (err) {
 		console.log('something bad happened with the database connection', error);
 	} else {
-		app.listen(3000, function () {
-			console.log(`${app.settings.name} listening on port 3000!`);
-		});
+		console.log('Booting Up...');
+		isMostRecentAppVersion().then(function(successMsg) {
+			console.log(successMsg);
+			app.listen(3000, function () {
+				console.log('\x1b[32m', `${app.settings.name} running at http://localhost:3000`, '\x1b[0m');
+			});
+		}, function(errorMsg) {
+			console.log('\x1b[31m', errorMsg, '\x1b[0m');
+			console.log('Shutting down.');
+		})
+			
+		
 	}
 });
 
+const isMostRecentAppVersion = function() {
+	return fetchBenchBuilderVersion().then((response) => {
+		if (response.version !== benchBuilderPackage.version) {
+			return Promise.reject(`Version ${benchBuilderPackage.version} is out of date - visit https://github.com/igor9000/benchBuilder#readme to upgrade`)
+		} else {
+			return Promise.resolve(`Version ${benchBuilderPackage.version} is current.`);
+		}
+	});
+};
+
+
+const fetchBenchBuilderVersion = function() {
+  return fetch(`https://raw.githubusercontent.com/igor9000/benchBuilder/main/package.json`)
+	.then(response => response.json())
+	.then(data => data);
+};
 
 
 module.exports = app;
