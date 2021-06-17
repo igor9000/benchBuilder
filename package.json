@@ -1,6 +1,6 @@
 {
-  "name": "hockey",
-  "version": "0.0.0",
+  "name": "Bench Builder",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
