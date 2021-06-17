@@ -5,6 +5,8 @@ const MongoClient = require('mongodb').MongoClient;
 
 var db = require('../db');
 
+const ratingValidityLengthInMs = 30 * (24 * 60 * 60 * 1000);
+
 
 const playerRatingCategories = [
 	{
@@ -88,7 +90,6 @@ router.get('/game', function(req, res, next) {
 		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, playerTicketId);
 		const playerIds = getAttendeeIDList(playerList);
 
-
 		db.get().collection('players').find({ 'openSportsUserId': { $in:playerIds } }).sort({ ratingOverall: -1 }).toArray().then(knownPlayerList => {
 
 			knownPlayerList.forEach(player => {
@@ -116,7 +117,9 @@ router.get('/game', function(req, res, next) {
 				playerList,
 				knownPlayerList,
 				hasUnknownPlayers,
-				rosters: !hasUnknownPlayers ? buildRoster(playerList) : undefined
+				rosters: !hasUnknownPlayers ? buildRoster(playerList) : undefined,
+				getPlayerRatingLabel: getPlayerRatingLabel,
+				isRatingExpired: isRatingExpired
 			});
 		});
 	});
@@ -249,12 +252,27 @@ const makePlayerKnown = function(playerList, knownPlayer) {
 	});
 	if (matchedPlayer) {
 		matchedPlayer.attendeeSummary[0].userSummary.ratingOverall = knownPlayer.ratingOverall;
+		matchedPlayer.attendeeSummary[0].userSummary.lastUpdateTime = knownPlayer.lastUpdateTime;		
 	}
+};
+
+const isRatingExpired = function(ratingTime = 0) {
+	return Date.now().valueOf() - ratingTime > ratingValidityLengthInMs;
+};
+
+const getPlayerRatingLabel = function(attendee, isRatingExpired = isRatingExpired) {
+	const rating = attendee.attendeeSummary[0].userSummary.ratingOverall;
+	if (rating && isRatingExpired(attendee.attendeeSummary[0].userSummary.lastUpdateTime)) {
+		return `${rating} (expired)`;
+	} else if (rating) {
+		return rating;
+	}
+	return `Not Rated`;
 };
 
 const getUnknownPlayers = function(playerList) {
 	const matchedPlayers = playerList.filter(player => {
-		return !player.attendeeSummary[0].userSummary.ratingOverall;
+		return isRatingExpired(player.attendeeSummary[0].userSummary.lastUpdateTime);
 	});
 	return matchedPlayers;
 };

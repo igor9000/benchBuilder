@@ -53,14 +53,15 @@ if (rosters === undefined) {
 			</thead>
 			<tbody>
 				<% playerList.forEach(attendee => {
-					const isKnownPlayer = attendee.attendeeSummary[0].userSummary.ratingOverall;
+					// const isKnownPlayer = attendee.attendeeSummary[0].userSummary.ratingOverall;
+					const needsToBeRated = isRatingExpired(attendee.attendeeSummary[0].userSummary.lastUpdateTime)
 
 				%>
-					<tr class="<%= isKnownPlayer ? 'player-known' : 'player-new' %>">
+					<tr class="<%= needsToBeRated ? 'player-new' : 'player-known' %>">
 						<td><a href="/player?id=<%= attendee.attendeeSummary[0].userSummary.userID %>"><%= attendee.attendeeSummary[0].userSummary.userID %></a></td>
 						<td><%= attendee.attendeeSummary[0].userSummary.firstName %></td>
 						<td><%= attendee.attendeeSummary[0].userSummary.lastName %></td>
-						<td><%= attendee.attendeeSummary[0].userSummary.ratingOverall || 'Not Rated' %></td>
+						<td><%= getPlayerRatingLabel(attendee, isRatingExpired) %></td>
 					</tr>
 				<% }) %>
 			</tbody>
