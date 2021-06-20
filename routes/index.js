@@ -329,4 +329,7 @@ const coinFlip = function() {
 }
 
 
-module.exports = router;
+module.exports = {
+	router,
+	fetchGames
+};

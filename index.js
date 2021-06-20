@@ -3,10 +3,8 @@ const fetch = require('node-fetch');
 
 const createError = require('http-errors');
 const path = require('path');
-//const cookieParser = require('cookie-parser');
-//const logger = require('morgan');
 
-const indexRouter = require('./routes/index');
+const indexRouter = require('./routes/index').router;
 const gamesRouter = require('./routes/games');
 const db = require('./db');
 
