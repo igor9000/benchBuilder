@@ -1,6 +1,6 @@
 {
   "name": "Bench-Builder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Connects to Open Sports API and builds teams for Hockey Games.",
   "private": true,
   "repository": {

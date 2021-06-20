@@ -88,23 +88,23 @@ router.get('/game', function(req, res, next) {
 		const dateString = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
 		const playerTicketId = gameInfo.result.ticketsSummary.find(item => item.title === "Player").id;
 		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, playerTicketId);
-		const playerIds = getAttendeeIDList(playerList);
+		const playerIds = playerModule.getAttendeeIDList(playerList);
 
-		db.get().collection('players').find({ 'openSportsUserId': { $in:playerIds } }).sort({ ratingOverall: -1 }).toArray().then(knownPlayerList => {
-
+		const query = { $or: [ { 'openSportsUserId': { $in:playerIds.map(p => p.userID) } }, { 'tempID': { $in:playerIds.map(p => p.tempID) } } ] };
+		db.get().collection('players').find(query).sort({ ratingOverall: -1 }).toArray().then(knownPlayerList => {
 			knownPlayerList.forEach(player => {
 				makePlayerKnown(playerList, player);
 			});
 
-			const unknownPlayers = getUnknownPlayers(playerList);
+			const unknownPlayers = getUnratedPlayers(playerList);
 			const hasUnknownPlayers = !!unknownPlayers.length;
 
-			addUnknownPlayersToDb(unknownPlayers);
+			addPlayersToDb(unknownPlayers);
 
 			playerList.sort((a, b) => {
-				if (b.attendeeSummary[0].userSummary.ratingOverall && a.attendeeSummary[0].userSummary.ratingOverall) {
-					return parseInt(b.attendeeSummary[0].userSummary.ratingOverall) - parseInt(a.attendeeSummary[0].userSummary.ratingOverall);
-				} else if (b.attendeeSummary[0].userSummary.ratingOverall) {
+				if (b.userSummary.ratingOverall && a.userSummary.ratingOverall) {
+					return parseInt(b.userSummary.ratingOverall) - parseInt(a.userSummary.ratingOverall);
+				} else if (b.userSummary.ratingOverall) {
 					return 1;
 				}
 				return -1;
@@ -188,7 +188,8 @@ router.post('/deletegroup', function(req, res, next) {
 
 
 router.get('/player', function(req, res, next) {
-	db.get().collection('players').findOne({ openSportsUserId: parseInt(req.query.id) }, function (findErr, result) {
+	const query = req.query.id ? { openSportsUserId: parseInt(req.query.id) } : { tempID: req.query.tempID };
+	db.get().collection('players').findOne(query, function (findErr, result) {
 		res.render('player', {
 			title: `${result.firstName} ${result.lastName}`,
 			playerInfo: result ? result : {},
@@ -200,7 +201,7 @@ router.get('/player', function(req, res, next) {
 });
 router.post('/player', function(req, res, next) {
 	const updateData = {};
-	const blackList = ['openSportsUserId'];
+	const blackList = ['openSportsUserId', 'tempID'];
 	let ratingOverall = 0;
 	let ratingMax = 0;
 	Object.keys(req.body).forEach(key => {
@@ -214,11 +215,12 @@ router.post('/player', function(req, res, next) {
 	updateData.lastUpdateTime = new Date().valueOf();
 
 
-	const query = { openSportsUserId: parseInt(req.body.openSportsUserId) };
+	const query = req.body.openSportsUserId ? { openSportsUserId: parseInt(req.body.openSportsUserId) } : { tempID: req.body.tempID };
 	const update = { $set: updateData };
 	const options = { upsert: true };
 	db.get().collection('players').updateOne(query, update, options);
-	res.redirect(`/player?id=${req.body.openSportsUserId}&success`);
+	const playerLink = req.body.openSportsUserId ? `/player?id=${req.body.openSportsUserId}` : `/player?tempID=${req.body.tempID}`
+	res.redirect(playerLink);
 });
 
 
@@ -235,24 +237,41 @@ const fetchGame = function(gameId) {
 };
 
 const getAttendeeListByAttendeeType = function(attendeeList, attendeeType) {
-	return attendeeList.filter(attendee => {
-		return parseInt(attendee.attendeeSummary[0].ticketClassID) === attendeeType;
+	const playerList = [];
+	attendeeList.forEach(attendee => {
+		attendee.attendeeSummary.forEach(summary => {
+			if (parseInt(summary.ticketClassID) === attendeeType) {
+				playerList.push(summary);
+			}
+		});
 	});
+	return playerList;
 };
 
 const getAttendeeIDList = function(attendeeList) {
 	return attendeeList.map(attendee => {
-		return attendee.attendeeSummary[0].userSummary.userID;
+		return {
+			userID: attendee.userSummary.userID,
+			tempID: playerModule.getTempID(attendee)
+		}
 	});
 };
 
 const makePlayerKnown = function(playerList, knownPlayer) {
 	const matchedPlayer = playerList.find(player => {
-		return parseInt(player.attendeeSummary[0].userSummary.userID) === parseInt(knownPlayer.openSportsUserId);
+		return parseInt(player.userSummary.userID) === parseInt(knownPlayer.openSportsUserId) || playerModule.getTempID(player) === knownPlayer.tempID;
 	});
+
+	const didPlayerBecomeAMember = matchedPlayer.userSummary.userID && !knownPlayer.openSportsUserId;
+
+	if (didPlayerBecomeAMember) {
+		addPlayersToDb([ matchedPlayer ]);
+	}
+
 	if (matchedPlayer) {
-		matchedPlayer.attendeeSummary[0].userSummary.ratingOverall = knownPlayer.ratingOverall;
-		matchedPlayer.attendeeSummary[0].userSummary.lastUpdateTime = knownPlayer.lastUpdateTime;		
+		matchedPlayer.userSummary.ratingOverall = knownPlayer.ratingOverall;
+		matchedPlayer.userSummary.lastUpdateTime = knownPlayer.lastUpdateTime;
+		matchedPlayer.userSummary.tempID = knownPlayer.tempID;
 	}
 };
 
@@ -261,8 +280,8 @@ const isRatingExpired = function(ratingTime = 0) {
 };
 
 const getPlayerRatingLabel = function(attendee, isRatingExpired = isRatingExpired) {
-	const rating = attendee.attendeeSummary[0].userSummary.ratingOverall;
-	if (rating && isRatingExpired(attendee.attendeeSummary[0].userSummary.lastUpdateTime)) {
+	const rating = attendee.userSummary.ratingOverall;
+	if (rating && isRatingExpired(attendee.userSummary.lastUpdateTime)) {
 		return `${rating} (expired)`;
 	} else if (rating) {
 		return rating;
@@ -270,25 +289,44 @@ const getPlayerRatingLabel = function(attendee, isRatingExpired = isRatingExpire
 	return `Not Rated`;
 };
 
-const getUnknownPlayers = function(playerList) {
+const getUnratedPlayers = function(playerList) {
 	const matchedPlayers = playerList.filter(player => {
-		return isRatingExpired(player.attendeeSummary[0].userSummary.lastUpdateTime);
+		return isRatingExpired(player.userSummary.lastUpdateTime);
 	});
 	return matchedPlayers;
 };
 
-const addUnknownPlayersToDb = function(playerList) {
+/**
+ * @desc Adds a player to the database. If the player was previously a non-member, but became
+ * 	a member, their open sports userID will be added to their db entry
+ * @param playerList<Object> - The list of players
+ */
+const addPlayersToDb = function(playerList) {
 	playerList.forEach(player => {
-		const query = { openSportsUserId: parseInt(player.attendeeSummary[0].userSummary.userID) };
+		const id = player.userSummary.userID
+			? { openSportsUserId: parseInt(player.userSummary.userID) }
+			: { tempID: playerModule.getTempID(player) };
+		const query = { $or: [ { 'tempID': playerModule.getTempID(player) }, { 'openSportsUserId': parseInt(player.userSummary.userID) } ] };
 		const playerData = {
-			openSportsUserId: parseInt(player.attendeeSummary[0].userSummary.userID),
-			firstName: player.attendeeSummary[0].userSummary.firstName,
-			lastName: player.attendeeSummary[0].userSummary.lastName
+			...id,
+			firstName: player.userSummary.firstName,
+			lastName: player.userSummary.lastName
 		};
 		const update = { $set: playerData };
 		const options = { upsert: true };
 		db.get().collection('players').updateOne(query, update, options);
 	});
+};
+
+const dao = {
+	getPlayers: function(query, sort = { lastName: 1 }) {
+		db.get().collection('players').find(query).sort(sort).toArray().then(playerList => {
+			console.log('Player List', playerList.length)
+			playerList.forEach(item => {
+				console.log(`\t${item.openSportsUserId || item.tempID} - ${item.firstName} - ${item.lastName}`)
+			});
+		});
+	}
 };
 
 const deleteEmptyPlayers = function() {
@@ -297,6 +335,10 @@ const deleteEmptyPlayers = function() {
 
 const deleteUnratedPlayers = function() {
 	db.get().collection('players').deleteMany({ ratingOverall: undefined });
+};
+
+const deletePLayersWithoutIDs = function() {
+	db.get().collection('players').deleteMany({ $and: [ { openSportsUserId: undefined }, { tempID: undefined } ] });
 };
 
 const buildRoster = function(playerList) {
@@ -328,8 +370,23 @@ const coinFlip = function() {
 	return Math.floor(Math.random() * (2 - 0) + 0);
 }
 
+const playerModule = {
+	getTempID: function(attendee) {
+		return `${attendee.userSummary.firstName.toLowerCase()}-${attendee.userSummary.lastName.toLowerCase()}`;
+	},
+	getAttendeeIDList: function(attendeeList) {
+		return attendeeList.map(attendee => {
+			return {
+				userID: attendee.userSummary.userID,
+				tempID: this.getTempID(attendee)
+			}
+		});
+	}
+};
 
 module.exports = {
 	router,
-	fetchGames
+	fetchGames,
+	getAttendeeListByAttendeeType,
+	playerModule
 };

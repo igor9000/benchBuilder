@@ -22,7 +22,7 @@ if (rosters === undefined) {
 	<%
 		rosters.lightTeam.players.forEach(player => {
 	%>
-		<div><%= player.attendeeSummary[0].userSummary.firstName %> <%= player.attendeeSummary[0].userSummary.lastName[0] %>.</div>
+		<div><%= player.userSummary.firstName %> <%= player.userSummary.lastName[0] %>.</div>
 <%
 	})
 %>
@@ -32,7 +32,7 @@ if (rosters === undefined) {
 	<%
 		rosters.darkTeam.players.forEach(player => {
 	%>
-		<div><%= player.attendeeSummary[0].userSummary.firstName %> <%= player.attendeeSummary[0].userSummary.lastName[0] %>.</div>
+		<div><%= player.userSummary.firstName %> <%= player.userSummary.lastName[0] %>.</div>
 <%
 	})
 %>
@@ -53,15 +53,15 @@ if (rosters === undefined) {
 			</thead>
 			<tbody>
 				<% playerList.forEach(attendee => {
-					// const isKnownPlayer = attendee.attendeeSummary[0].userSummary.ratingOverall;
-					const needsToBeRated = isRatingExpired(attendee.attendeeSummary[0].userSummary.lastUpdateTime)
-
+					// const isKnownPlayer = attendee.userSummary.ratingOverall;
+					const needsToBeRated = isRatingExpired(attendee.userSummary.lastUpdateTime)
+					const playerLink = attendee.userSummary.userID ? `/player?id=${attendee.userSummary.userID}` : `/player?tempID=${attendee.userSummary.tempID}`;
 				%>
 					<tr class="<%= needsToBeRated ? 'player-new' : 'player-known' %>">
-						<td><a href="/player?id=<%= attendee.attendeeSummary[0].userSummary.userID %>"><%= attendee.attendeeSummary[0].userSummary.userID %></a></td>
-						<td><%= attendee.attendeeSummary[0].userSummary.firstName %></td>
-						<td><%= attendee.attendeeSummary[0].userSummary.lastName %></td>
-						<td><%= getPlayerRatingLabel(attendee, isRatingExpired) %></td>
+						<td><%= attendee.userSummary.userID || 'Non-Member' %></td>
+						<td><%= attendee.userSummary.firstName %></td>
+						<td><%= attendee.userSummary.lastName %></td>
+						<td><a href="<%= playerLink %>"><%= getPlayerRatingLabel(attendee, isRatingExpired) %></a></td>
 					</tr>
 				<% }) %>
 			</tbody>

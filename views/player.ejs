@@ -13,6 +13,7 @@
 		<form action="/player" method="post">
 			<div>Open Sports User ID: <%= playerInfo.openSportsUserId %></div>
 			<input name="openSportsUserId" type="hidden" value="<%= playerInfo.openSportsUserId %>" />
+			<input name="tempID" type="hidden" value="<%= playerInfo.tempID %>" />
 
 			<%
 				playerRatingCategories.forEach((ratingCategory, index) => {
