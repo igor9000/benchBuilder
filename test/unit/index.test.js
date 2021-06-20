@@ -134,6 +134,46 @@ describe('index router', () => {
 		});
 	});
 
+	describe('getAttendeeListByAttendeeType method', () => {
+		it('should return only the attendees that match the provided attendeeType', () => {
+			const result = indexRouter.getAttendeeListByAttendeeType(mockedAttendeeList, 111222333);
+
+			expect(result).toEqual([{
+				id: 1,
+				status: 200,
+				userID: 123,
+				isFlexible: false,
+				userSummary: {
+					userID: 123,
+					firstName: 'John',
+					lastName: 'Doe'
+				},
+				ticketClassID: 111222333
+			}, {
+				id: 2,
+				status: 200,
+				userID: 456,
+				isFlexible: false,
+				userSummary: {
+					userID: 456,
+					firstName: 'Bob',
+					lastName: 'Smith'
+				},
+				ticketClassID: 111222333
+			}, {
+				id: 2,
+				status: 200,
+				userID: 456,
+				isFlexible: false,
+				userSummary: {
+					firstName: 'Alice',
+					lastName: 'Smith'
+				},
+				ticketClassID: 111222333
+			}]);
+		});
+	});
+
 	describe('the playerModule', () => {
 		describe('getAttendeeIDList method', () => {
 			const context = {};
@@ -175,43 +215,45 @@ describe('index router', () => {
 		});
 	});
 
-	describe('getAttendeeListByAttendeeType method', () => {
-		it('should return only the attendees that match the provided attendeeType', () => {
-			const result = indexRouter.getAttendeeListByAttendeeType(mockedAttendeeList, 111222333);
-
-			expect(result).toEqual([{
-				id: 1,
-				status: 200,
-				userID: 123,
-				isFlexible: false,
-				userSummary: {
-					userID: 123,
-					firstName: 'John',
-					lastName: 'Doe'
-				},
-				ticketClassID: 111222333
-			}, {
-				id: 2,
-				status: 200,
-				userID: 456,
-				isFlexible: false,
-				userSummary: {
-					userID: 456,
-					firstName: 'Bob',
-					lastName: 'Smith'
-				},
-				ticketClassID: 111222333
-			}, {
-				id: 2,
-				status: 200,
-				userID: 456,
-				isFlexible: false,
-				userSummary: {
-					firstName: 'Alice',
-					lastName: 'Smith'
-				},
-				ticketClassID: 111222333
-			}]);
-		});
+	describe('the bbUtils', () => {
+		describe('sorts library', () => {
+			describe('sortByPlayerRanking', () => {
+				it('should sort a list of players by ranking, highest to lowest', () => {
+					const playerList = [{
+						userSummary: {
+							lastName: 'Smith',
+							ratingOverall: 1
+						}
+					}, {
+						userSummary: {
+							lastName: 'Jones',
+							ratingOverall: 55
+						}
+					}, {
+						userSummary: {
+							lastName: 'Anderson',
+							ratingOverall: 99
+						}
+					}];
+					playerList.sort(indexRouter.bbUtils.sorts.byPlayerRanking)
+					expect(playerList).toEqual([{
+						userSummary: {
+							lastName: 'Anderson',
+							ratingOverall: 99
+						}
+					}, {
+						userSummary: {
+							lastName: 'Jones',
+							ratingOverall: 55
+						}
+					}, {
+						userSummary: {
+							lastName: 'Smith',
+							ratingOverall: 1
+						}
+					}]);
+				});
+			});
+		})
 	});
 });

@@ -101,14 +101,7 @@ router.get('/game', function(req, res, next) {
 
 			addPlayersToDb(unknownPlayers);
 
-			playerList.sort((a, b) => {
-				if (b.userSummary.ratingOverall && a.userSummary.ratingOverall) {
-					return parseInt(b.userSummary.ratingOverall) - parseInt(a.userSummary.ratingOverall);
-				} else if (b.userSummary.ratingOverall) {
-					return 1;
-				}
-				return -1;
-			});
+			playerList.sort(bbUtils.sorts.byPlayerRanking);
 
 
 			res.render('game', {
@@ -384,9 +377,26 @@ const playerModule = {
 	}
 };
 
+const bbUtils = {
+	sorts: {
+		/**
+		 * @desc Array sorter, sorts by player ranking highest to lowest
+		 */
+		byPlayerRanking(a, b) {
+			if (b.userSummary.ratingOverall && a.userSummary.ratingOverall) {
+				return parseInt(b.userSummary.ratingOverall) - parseInt(a.userSummary.ratingOverall);
+			} else if (b.userSummary.ratingOverall) {
+				return 1;
+			}
+			return -1;
+		}
+	}
+}
+
 module.exports = {
 	router,
 	fetchGames,
 	getAttendeeListByAttendeeType,
-	playerModule
+	playerModule,
+	bbUtils
 };

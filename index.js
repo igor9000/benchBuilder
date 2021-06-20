@@ -50,6 +50,7 @@ db.connect('mongodb://localhost', 'benchBuilder', function(err) {
 		}, function(errorMsg) {
 			console.log('\x1b[31m', errorMsg, '\x1b[0m');
 			console.log('Shutting down.');
+			process.exit()
 		})
 			
 		
