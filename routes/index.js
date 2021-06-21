@@ -241,15 +241,6 @@ const getAttendeeListByAttendeeType = function(attendeeList, attendeeType) {
 	return playerList;
 };
 
-const getAttendeeIDList = function(attendeeList) {
-	return attendeeList.map(attendee => {
-		return {
-			userID: attendee.userSummary.userID,
-			tempID: playerModule.getTempID(attendee)
-		}
-	});
-};
-
 const makePlayerKnown = function(playerList, knownPlayer) {
 	const matchedPlayer = playerList.find(player => {
 		return parseInt(player.userSummary.userID) === parseInt(knownPlayer.openSportsUserId) || playerModule.getTempID(player) === knownPlayer.tempID;
@@ -367,6 +358,12 @@ const playerModule = {
 	getTempID: function(attendee) {
 		return `${attendee.userSummary.firstName.toLowerCase()}-${attendee.userSummary.lastName.toLowerCase()}`;
 	},
+
+	/**
+	 * @desc Gets a list of both userIDs and tempIDs from an attendee list
+	 * @param {Object[]} attendeeList
+	 * @return {Object[]}
+	 */
 	getAttendeeIDList: function(attendeeList) {
 		return attendeeList.map(attendee => {
 			return {
@@ -380,7 +377,7 @@ const playerModule = {
 const bbUtils = {
 	sorts: {
 		/**
-		 * @desc Array sorter, sorts by player ranking highest to lowest
+		 * @desc Array sorter, sorts players by highest ranking to lowest
 		 */
 		byPlayerRanking(a, b) {
 			if (b.userSummary.ratingOverall && a.userSummary.ratingOverall) {
