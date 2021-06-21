@@ -1,127 +1,15 @@
+// Unit test suite
+// run via command line: cls && npm run test --coverage
+
 const indexRouter = require('./../../routes/index');
+const mocks = require('./mocks/data-mocks.js')
 
 require('jest-fetch-mock').enableMocks();
 
 
-const mockedAttendeeList = [{
-	id: 1,
-	status: 200,
-	statusOverride: 200,
-	data: null,
-	userID: 123,
-	userSummary: null,
-	attendeeSummary: [{
-		id: 1,
-		status: 200,
-		userID: 123,
-		isFlexible: false,
-		userSummary: {
-			userID: 123,
-			firstName: 'John',
-			lastName: 'Doe'
-		},
-		ticketClassID: 111222333
-	}]
-}, {
-	id: 2,
-	status: 200,
-	statusOverride: 200,
-	data: null,
-	userID: 456,
-	userSummary: null,
-	attendeeSummary: [{
-		id: 2,
-		status: 200,
-		userID: 456,
-		isFlexible: false,
-		userSummary: {
-			userID: 456,
-			firstName: 'Bob',
-			lastName: 'Smith'
-		},
-		ticketClassID: 111222333
-	}, {
-		id: 2,
-		status: 200,
-		userID: 456,
-		isFlexible: false,
-		userSummary: {
-			firstName: 'Alice',
-			lastName: 'Smith'
-		},
-		ticketClassID: 111222333
-	}]
-}, {
-	id: 3,
-	status: 200,
-	statusOverride: 200,
-	data: null,
-	userID: 789,
-	userSummary: null,
-	attendeeSummary: [{
-		id: 1,
-		status: 200,
-		userID: 789,
-		isFlexible: false,
-		userSummary: {
-			userID: 789,
-			firstName: 'Goalie',
-			lastName: 'McGoalieface'
-		},
-		ticketClassID: 777888999
-	}]
-}];
 
-const mockedPlayerList = [{
-	id: 1,
-	status: 200,
-	userID: 123,
-	isFlexible: false,
-	userSummary: {
-		userID: 123,
-		firstName: 'John',
-		lastName: 'Doe'
-	},
-	ticketClassID: 111222333
-}, {
-	id: 2,
-	status: 200,
-	userID: 456,
-	isFlexible: false,
-	userSummary: {
-		userID: 456,
-		firstName: 'Bob',
-		lastName: 'Smith'
-	},
-	ticketClassID: 111222333
-}, {
-	id: 2,
-	status: 200,
-	userID: 456,
-	isFlexible: false,
-	userSummary: {
-		firstName: 'Alice',
-		lastName: 'Smith'
-	},
-	ticketClassID: 111222333
-}, {
-	id: 1,
-	status: 200,
-	userID: 789,
-	isFlexible: false,
-	userSummary: {
-		userID: 789,
-		firstName: 'Goalie',
-		lastName: 'McGoalieface'
-	},
-	ticketClassID: 777888999
-}];
 
 describe('index router', () => {
-	beforeEach(() => {
-		fetch.resetMocks()
-	});
-
 	describe('fetchGames method', () => {
 		it('should return an object from the Open Sports API', async () => {
 			const mockedResponse = { mocked: 'a mocked response' };
@@ -136,7 +24,7 @@ describe('index router', () => {
 
 	describe('getAttendeeListByAttendeeType method', () => {
 		it('should return only the attendees that match the provided attendeeType', () => {
-			const result = indexRouter.getAttendeeListByAttendeeType(mockedAttendeeList, 111222333);
+			const result = indexRouter.getAttendeeListByAttendeeType(mocks.mockedAttendeeList, 111222333);
 
 			expect(result).toEqual([{
 				id: 1,
@@ -185,7 +73,7 @@ describe('index router', () => {
 					.mockReturnValueOnce('mocked-temp-id-4');
 			});
 			it('should return both the userID and tempID in an object', () => {
-				const result = indexRouter.playerModule.getAttendeeIDList.call(context, mockedPlayerList);
+				const result = indexRouter.playerModule.getAttendeeIDList.call(context, mocks.mockedPlayerList);
 				expect(result).toEqual([{
 					userID: 123,
 					tempID: 'mocked-temp-id-1'
