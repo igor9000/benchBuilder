@@ -76,8 +76,6 @@ router.get('/', function(req, res, next) {
 			});
 		}
 	});
-
-
 });
 
 
@@ -88,10 +86,9 @@ router.get('/game', function(req, res, next) {
 		const dateString = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
 		const playerTicketId = gameInfo.result.ticketsSummary.find(item => item.title === "Player").id;
 		const playerList = getAttendeeListByAttendeeType(gameInfo.result.attending, playerTicketId);
-		const playerIds = playerModule.getAttendeeIDList(playerList);
+		const playerIdList = playerModule.getAttendeeIDList(playerList);
 
-		const query = { $or: [ { 'openSportsUserId': { $in:playerIds.map(p => p.userID) } }, { 'tempID': { $in:playerIds.map(p => p.tempID) } } ] };
-		db.get().collection('players').find(query).sort({ ratingOverall: -1 }).toArray().then(knownPlayerList => {
+		playerModule.getPlayersByIdList(playerIdList).then(knownPlayerList => {
 			knownPlayerList.forEach(player => {
 				makePlayerKnown(playerList, player);
 			});
@@ -246,7 +243,7 @@ const makePlayerKnown = function(playerList, knownPlayer) {
 		return parseInt(player.userSummary.userID) === parseInt(knownPlayer.openSportsUserId) || playerModule.getTempID(player) === knownPlayer.tempID;
 	});
 
-	const didPlayerBecomeAMember = matchedPlayer.userSummary.userID && !knownPlayer.openSportsUserId;
+	const didPlayerBecomeAMember = matchedPlayer && matchedPlayer.userSumary && matchedPlayer.userSummary.userID && !knownPlayer.openSportsUserId;
 
 	if (didPlayerBecomeAMember) {
 		addPlayersToDb([ matchedPlayer ]);
@@ -371,6 +368,11 @@ const playerModule = {
 				tempID: this.getTempID(attendee)
 			}
 		});
+	},
+
+	getPlayersByIdList(playerIdList) {
+		const query = { $or: [ { 'openSportsUserId': { $in:playerIdList.map(p => p.userID) } }, { 'tempID': { $in:playerIdList.map(p => p.tempID) } } ] };
+		return db.get().collection('players').find(query).sort({ ratingOverall: -1 }).toArray()
 	}
 };
 
